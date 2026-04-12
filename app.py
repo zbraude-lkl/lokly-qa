@@ -150,11 +150,13 @@ def load_restaurant_context():
         if p.get("instagram_handle"):
             lines.append(f"Instagram: @{p['instagram_handle']}")
 
+        if p.get("photo_url"):
+            lines.append(f"Photo URL: {p['photo_url']}")
         if p.get("lokly_qualified"):
             lines.append(f"Lokly certified: ✅")
 
     context = "\n".join(lines)
-    return context, len(places)
+    return context, len(places), places
 
 
 # ─── System prompt ──────────────────────────────────────────────────────────────
@@ -195,9 +197,9 @@ def main():
 
     # Load context
     with st.spinner("Loading restaurant database..."):
-        context, count = load_restaurant_context()
+        context, count, places = load_restaurant_context()
 
-    st.success(f"✅ {count} Tel Aviv restaurants loaded")
+    st.success(f"✅ {count} Tel Aviv restaurants loaded ({sum(1 for p in places if p.get('photo_url'))} with photos)")
 
     # Init chat history
     if "messages" not in st.session_state:
@@ -232,6 +234,14 @@ def main():
                 answer = response.content[0].text
 
             st.markdown(answer)
+
+            # Show photos for any mentioned restaurants
+            mentioned = [p for p in places if p.get("photo_url") and p["name"].lower() in answer.lower()]
+            if mentioned:
+                cols = st.columns(len(mentioned))
+                for col, p in zip(cols, mentioned):
+                    col.image(p["photo_url"], caption=p["name"], use_container_width=True)
+
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
     # Sidebar
