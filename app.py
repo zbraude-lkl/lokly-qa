@@ -33,10 +33,15 @@ def check_password():
     return True
 
 # ─── Load restaurant DNA from Supabase ─────────────────────────────────────────
+PRICE_MAP = {1: "₪ (budget, under 60 NIS/person)", 2: "₪₪ (mid-range, 60-120 NIS/person)", 3: "₪₪₪ (120-200 NIS/person)", 4: "₪₪₪₪ (200-300 NIS/person)", 5: "₪₪₪₪₪ (300+ NIS/person)"}
+
 @st.cache_data(ttl=300)
 def load_restaurant_context():
     sb = create_client(SUPABASE_URL, SUPABASE_KEY)
     places = sb.table("places").select("*").eq("city", "Tel Aviv").order("name").execute().data
+    # Load price levels from meal_period_profiles
+    profiles = sb.table("meal_period_profiles").select("place_id,price_level").eq("meal_period", "dinner").execute().data
+    price_by_place = {p["place_id"]: p["price_level"] for p in profiles if p.get("price_level")}
 
     lines = []
     for p in places:
@@ -54,6 +59,9 @@ def load_restaurant_context():
             lines.append(f"Category: {p['place_category']}")
         if p.get("google_rating"):
             lines.append(f"Google Rating: {p['google_rating']} ({p.get('google_review_count', '?')} reviews)")
+        price = price_by_place.get(p['id'])
+        if price:
+            lines.append(f"Price level: {PRICE_MAP.get(price, str(price))}")
         if p.get("chef_name"):
             lines.append(f"Chef: {p['chef_name']}")
 
@@ -162,6 +170,7 @@ Guidelines:
 - If you don't have the data, say "I don't have that detail" and move on. NEVER tell users to check Instagram, call the restaurant, or go elsewhere. We are the source.
 - Be direct. Make a clear recommendation.
 - 1-3 options max. If one place is clearly right, just say that one.
+- ALWAYS use ₪ (NIS / New Israeli Shekel) for any price references. Never use € or $. Israel uses shekels.
 - The data quality varies: the first 24 restaurants are fully profiled, the newer ones may have less data.
 
 Here is the current database:
