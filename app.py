@@ -52,7 +52,8 @@ def load_restaurant_context():
             lines.append(f"Cuisine: {p['cuisine']}")
         if p.get("place_category"):
             lines.append(f"Category: {p['place_category']}")
-        # Rating intentionally excluded — Lokly is the guide, not an aggregator
+        if p.get("google_rating"):
+            lines.append(f"Google Rating: {p['google_rating']} ({p.get('google_review_count', '?')} reviews)")
         if p.get("chef_name"):
             lines.append(f"Chef: {p['chef_name']}")
 
