@@ -237,3 +237,7 @@ def main():
             st.rerun()
         st.markdown("---")
         st.caption("Lokly.ai internal tool — do not share")
+
+
+if __name__ == "__main__" or True:
+    main()
